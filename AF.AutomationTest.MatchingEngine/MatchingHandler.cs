@@ -35,11 +35,23 @@ namespace AF.AutomationTest.MatchingEngine
 
         private bool IsMatch(Record trade, Record counterTrade)
         {
-            const int quantityTolerance = 5;
+            var numOfMatch = Matches.Values.Count(t =>
+                t.trade.Id == trade.Id || t.counterTrade.Id == counterTrade.Id ||
+                t.trade.Id == counterTrade.Id && t.counterTrade.Id == trade.Id);
+            if (numOfMatch != 0)
+            {
+                Trace.WriteLine(
+                    $"match not found!! tradeId: {trade.Id} or counterTradeId: {counterTrade.Id}, is already match ");
+                return false;
+            }
 
-            if (trade.Symbol == counterTrade.Symbol.ToLower() && (trade.Quantity - counterTrade.Quantity) < quantityTolerance &&
-                DateTime.Compare(trade.SettlementDate.Date, counterTrade.SettlementDate.Date) == 0 && trade.Price == counterTrade.Price &&
-                trade.Side != counterTrade.Side)
+            const int quantityTolerance = 10;
+
+            if (trade.Symbol.Equals(counterTrade.Symbol)
+                && Math.Abs((trade.Quantity - counterTrade.Quantity)) <= quantityTolerance
+                && DateTime.Compare(trade.SettlementDate.Date, counterTrade.SettlementDate.Date) == 0
+                && trade.Price == counterTrade.Price
+                && trade.Side != counterTrade.Side)
             {
                 Matches.Add((trade.Id, counterTrade.Id), (trade, counterTrade));
                 Trace.WriteLine($"match found!! tradeId: {trade.Id}, counterTradeId: {counterTrade.Id}");
